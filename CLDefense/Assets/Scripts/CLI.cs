@@ -21,6 +21,11 @@ public class CLI : MonoBehaviour {
     private bool _isInit = false;
     private Dictionary<string, Action<string>> _commands;
 
+    private const int MEMORY_COUNT = 20;
+    private List<string> _memory = new List<string>();
+    private int _memoryIndex = 0;
+    private bool _inMemory = false;
+
     private void Start() {
         Bind();
         _inputField.text = "";
@@ -29,6 +34,36 @@ public class CLI : MonoBehaviour {
         DisplayMessage(Utils.LoadTextFromFile("greeting.txt"));
     }
 
+    private void Update() {
+        //TODO: holding?
+        if(Input.GetKeyDown(KeyCode.UpArrow)) {
+            BrowseMemory(1);
+        }
+        if(Input.GetKeyDown(KeyCode.DownArrow)) {
+            BrowseMemory(-1);
+        }
+
+    }
+
+    private void BrowseMemory(int step) {
+        if(!_inMemory) {
+            _inMemory = true;
+            _memoryIndex = -1;
+        }
+        _memoryIndex += step;
+        if(_memoryIndex < 0) {
+            _inMemory = false;
+            _inputField.text = "";
+            return;
+        }
+        if(_memoryIndex < _memory.Count)
+            _inputField.text = _memory[_memoryIndex];
+        else
+            _memoryIndex -= step;
+        _inputField.caretPosition = _inputField.text.Length;
+    }
+
+    #region commands
     private void Bind() {
         if(_isInit)
             return;
@@ -37,10 +72,8 @@ public class CLI : MonoBehaviour {
         _commands.Add("-help", Help);
         _commands.Add("start", GameStart);
     }
-
-    #region commands
     private void GameStart(string obj) {
-
+        Utils.LoadTextFromFileNonBlocking("Map1.txt",DisplayMessage);
     }
 
     private void Help(string obj) {
@@ -55,18 +88,29 @@ public class CLI : MonoBehaviour {
 
     private void OnEndEdit() {
         string cmd = _inputField.text;
+        _inMemory = false;
         _inputField.text = "";
         _inputField.ActivateInputField();
         if(string.IsNullOrEmpty(cmd))
             return;
+        Memorize(cmd);
         Push(cmd);
         Interpret(cmd);
+    }
+
+    private void Memorize(string cmd) {
+        if(_memory.Count > 0 && _memory[0] == cmd)
+            return;
+        _memory.Insert(0,cmd);
+        while(_memory.Count > MEMORY_COUNT) {
+            _memory.RemoveAt(_memory.Count - 1);
+        }
     }
 
     private void Push(string message) {
         Text current = _line;
         if(_lines.Count < _maxLinesCount) {
-            current = Instantiate<Text>(_line);
+            current = Instantiate(_line);
             current.transform.SetParent(_content);
             current.transform.localScale = Vector3.one;
         } else {

@@ -1,0 +1,9 @@
+        ___    ____     ___
+        \\\\  ////\\   ////
+         \\\\////\\\\ ////
+          \\\\//  \\\\///
+           \\\/    \\\\/
+
+Welcome to the command center, commander.
+
+For more information type '-help'.

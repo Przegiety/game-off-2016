@@ -1,0 +1,3 @@
+List of available commands:
+>> '-clear' clears the console
+>> '-help' displays this message 

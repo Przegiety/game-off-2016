@@ -73,7 +73,11 @@ public class CLI : MonoBehaviour {
         _commands.Add("start", GameStart);
     }
     private void GameStart(string obj) {
-        Utils.LoadTextFromFileNonBlocking("Map1.txt",DisplayMessage);
+        Utils.LoadTextFromFileNonBlocking("Map1.txt",GenerateMap);
+    }
+
+    private void GenerateMap(string obj) {
+        TD.Map.Generate(obj);
     }
 
     private void Help(string obj) {

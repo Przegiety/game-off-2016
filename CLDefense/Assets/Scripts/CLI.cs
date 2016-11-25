@@ -5,8 +5,14 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using TD;
 
 public class CLI : MonoBehaviour {
+    [SerializeField]
+    private Color _regularColor;
+    [SerializeField]
+    private Color _errorColor;
+
     [SerializeField]
     private int _maxLinesCount = 20;
 
@@ -25,6 +31,8 @@ public class CLI : MonoBehaviour {
     private List<string> _memory = new List<string>();
     private int _memoryIndex = 0;
     private bool _inMemory = false;
+
+    private TD.Map _map;
 
     private void Start() {
         Bind();
@@ -71,13 +79,36 @@ public class CLI : MonoBehaviour {
         _commands.Add("-clear", Clear);
         _commands.Add("-help", Help);
         _commands.Add("start", GameStart);
+        _commands.Add("build", Build);
     }
+
+    private void Build(string obj) {
+        if(_map == null)
+            throw new InvalidOperationException("Not in game mode");
+
+        string[] args = obj.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
+
+        if(args.Length < 4)
+            throw new ArgumentException("Not enough parameters specified");
+        int x = 0;
+        string xString = args[2];
+
+        int y = 0;
+        string yString = args[2];
+
+        if(!int.TryParse(args[2], out x))
+            throw new ArgumentException("Couldn't read x positon");
+        if(!int.TryParse(args[3], out y))
+            throw new ArgumentException("Couldn't read y positon");
+        Turret.Build(args[1], _map.GetTile(x, y));
+    }
+
     private void GameStart(string obj) {
         Utils.LoadTextFromFileNonBlocking("Map1.txt",GenerateMap);
     }
 
     private void GenerateMap(string obj) {
-        TD.Map.Generate(obj);
+        _map = TD.Map.Generate(obj);
     }
 
     private void Help(string obj) {
@@ -111,7 +142,7 @@ public class CLI : MonoBehaviour {
         }
     }
 
-    private void Push(string message) {
+    private void Push(string message, bool isError = false) {
         Text current = _line;
         if(_lines.Count < _maxLinesCount) {
             current = Instantiate(_line);
@@ -123,6 +154,7 @@ public class CLI : MonoBehaviour {
         _lines.Enqueue(current);
         current.transform.SetAsLastSibling();
         current.text = message;
+        current.color = isError ? _errorColor : _regularColor;
     }
 
     //TODO: no idea what to do here
@@ -130,7 +162,12 @@ public class CLI : MonoBehaviour {
         bool found = false;
         foreach(var command in _commands) {
             if(cmd.StartsWith(command.Key)) {
-                command.Value(cmd);
+                try {
+                    command.Value(cmd);
+                } catch(Exception e) {
+                    Push(e.Message, true);
+                    Debug.Log(e.Message);
+                }
                 found = true;
             }
         }

@@ -32,5 +32,7 @@ namespace TD {
                     _y * _width + Map.Y_OFFSET, transform.position.z);
             }
         }
+        [HideInInspector]
+        public Turret turret = null;
     }
 }
